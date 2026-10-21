@@ -3,12 +3,14 @@
 #include "RobotWifiAP.h"
 
 /** @brief WiFi access-point and TCP server used for optional telemetry. */
-RobotWifiAP_c server("myAP", "myPassword", 80);
+RobotWifiAP_c server("tim", "timothy", 80);
 
 #include "Robot.h"
 #include "RobotIMU.h"
 #include "Controller.h"
-
+#include "TaskTimer.h"
+TaskTimer_c LED_timer;
+int led_brightness;
 
 /** @brief Hardware-facing interface to the Pololu robot. */
 Robot_c robot;
@@ -22,9 +24,12 @@ Controller_c controller;
 void setup() {
 
   Serial.begin(115200);
-  server.begin();
+  delay(2000);
+  Serial.println("Starting setup...");
+  //server.begin();
+  led_brightness = 0;
 
-  robot.initialise();
+  //robot.initialise("segfault");
 //  robot.initialise("team name");
 
 
@@ -35,18 +40,23 @@ void setup() {
     robot.setLED( 90, 50, 0, 100 ); // orange warning
   }
 
+  LED_timer.setIntervalMS(500);
+  Serial.println("Setup reached the end!");
+
 }
 
 
 /** @brief Maintains telemetry transport and runs the controller repeatedly. */
 void loop() {
+
+  Serial.println("Hello from robot");
+  delay(1000);
   // Accept or maintain the optional Processing telemetry connection. The
   // controller continues to run even when no client is connected.
   server.update();
 
-  
   // Run an iteration of the robot controller code.
-  // Develop controller routines in Controller.cpp; edit parameters in Controller.h.
+  // You shoul develop further code within Controller.h
   controller.update(robot, server);
 
 }

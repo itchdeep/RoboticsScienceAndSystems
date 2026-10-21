@@ -30,7 +30,7 @@ class Controller_c {
     /** @brief Maximum line-search duration before the controller stops. */
     static const unsigned long RECOVERY_TIMEOUT_MS = 5000;
     /** @brief Surface-reading threshold used to decide whether a line is present. */
-    static const uint16_t LINE_THRESHOLD = 1400;
+    static const uint16_t LINE_THRESHOLD = 1400; // lower - thinks everything is a line; higher - thinks nothing is a line
     /** @brief Nominal forward PWM bias for line following. */
     static constexpr float BASE_PWM = 45.0f;
     /** @brief Proportional gain applied to the DN2-minus-DN4 surface error. */
@@ -93,6 +93,9 @@ class Controller_c {
 
     /** @brief Returns whether cached DN3 is at or above LINE_THRESHOLD. */
     bool lineDetected(const Robot_c &robot) const;
+
+    /** @brief test function, prints readings to serial. */
+    void sensorTest(Robot_c &robot, unsigned long now);
 
     /** @brief Applies the nominal controller behaviour for the current mode. */
     void runLineFollower(Robot_c &robot, unsigned long now);
