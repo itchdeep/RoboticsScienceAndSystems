@@ -76,6 +76,21 @@ class Controller_c {
      */
     void update(Robot_c &robot, RobotWifiAP_c &server);
 
+    void testFootprint(Robot_c &robot, unsigned long now);
+
+    // To track when the last sensor readings were retrieved in microseconds
+    unsigned long last_surface_us;
+    // Tracks how many sensor sample screenshots were recorded
+    unsigned long sample_num;
+
+    // csv test_name field
+    const char* test_name_str = "footprintWhiteReference";
+    // width of black test strip
+    uint8_t rectangle_width_mm = 0;
+    // signed position across strip in mm
+    int16_t position_mm = 0;
+    
+
   private:
     /** @brief Internal modes used by the nominal line-following demonstration. */
     enum Mode {
@@ -90,12 +105,16 @@ class Controller_c {
     TaskTimer_c update_timer;
     TaskTimer_c telemetry_timer;
     unsigned long recovery_start_ms;
+    unsigned long trial_num = 0;
 
     /** @brief Returns whether cached DN3 is at or above LINE_THRESHOLD. */
     bool lineDetected(const Robot_c &robot) const;
 
-    /** @brief test function, prints readings to serial. */
+    /** @brief sensor test function, prints IR readings to serial. */
     void sensorTest(Robot_c &robot, unsigned long now);
+
+    /** @brief tests sensor offsets */
+    void testOffset(Robot_c &robot, unsigned long now);
 
     /** @brief Applies the nominal controller behaviour for the current mode. */
     void runLineFollower(Robot_c &robot, unsigned long now);

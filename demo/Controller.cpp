@@ -19,7 +19,8 @@ void Controller_c::reset() {
   signal = 0;
   mode = WAITING;
   recovery_start_ms = 0;
-
+  last_surface_us = 0;
+  sample_num = 0;
 }
 
 uint8_t Controller_c::getSignal() const {
@@ -61,7 +62,7 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   update_timer.resetTimer(now);
 
   // Ask the robot for latest information on surface reflectance sensors.
-  robot.getSurfaceSensors();
+  bool surface_ok = robot.getSurfaceSensors();
 
   // Ask the robot for the latest encoder information, and then use this
   // to update the odometry on board the StampC3 (see OdometryModel.h).
@@ -71,6 +72,8 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
 
   // Pose estimation from the Pololu 3Pi robot itself.
   robot.getPose();
+
+  
 
   // While waiting, a button press sets signal to 1 and starts the physical
   // robot's line follower, even without Processing connected. The transmitted
@@ -86,7 +89,14 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   // controller code.
   if (signal == 1) {
     //runLineFollower(robot, now);
-    sensorTest(robot, now);
+    if (surface_ok == true){
+      testOffset(robot, now);
+      sample_num++;
+    }
+    if (robot.isButtonPressed()) {
+      setSignal(0);
+      trial_num++;
+    }
   }
 
   // Use another TaskTimer_c to limit how often we transmit telemetry data
@@ -108,18 +118,117 @@ bool Controller_c::lineDetected(const Robot_c &robot) const {
 
 void Controller_c::sensorTest(Robot_c &robot, unsigned long now) {
   // Report sensor readings to view on Serial Plotter
-  Serial.print( robot.surface.reading[0] );
+  Serial.print( robot.surface.reading[0] ); // DN1
   Serial.print( "," );
-  Serial.print( robot.surface.reading[1] );
+  Serial.print( robot.surface.reading[1] ); // DN2
   Serial.print( "," );
-  Serial.print( robot.surface.reading[2] );
+  Serial.print( robot.surface.reading[2] ); // DN3
   Serial.print( "," );
-  Serial.print( robot.surface.reading[3] );
+  Serial.print( robot.surface.reading[3] ); // DN4
   Serial.print( "," );
-  Serial.print( robot.surface.reading[4] );
+  Serial.print( robot.surface.reading[4] ); // DN5
   Serial.print( "\n" );
 
   // Ensure the robot is stopped
+  robot.setMotorPWM(0,0);
+}
+
+void Controller_c::testOffset(Robot_c &robot, unsigned long now) {
+  // check if last reading timestamp has advanced
+  if (robot.surface.timestamp_us <= last_surface_us){
+    return;
+  }
+  last_surface_us = robot.surface.timestamp_us;
+
+  if (sample_num == 0) {
+    // Header
+    Serial.print( "test_name" );
+    Serial.print( "," );
+    Serial.print( "trial_num" );
+    Serial.print( "," );
+    Serial.print( "sample_num" );
+    Serial.print( "," );
+    Serial.print( "sample_time" );
+    Serial.print( "," );
+    Serial.print( "sensor_num" );
+    Serial.print( "," );
+    Serial.print( "sensor_reading" );
+    Serial.print( "\n" );
+  }
+  
+  // Report sensor readings to view on Serial Plotter
+  for (unsigned long sensor = 0; sensor <= 4; sensor++) {
+    Serial.print( "offsetTest_white");
+    Serial.print( "," );
+    Serial.print( trial_num );
+    Serial.print( "," );
+    Serial.print( sample_num );
+    Serial.print( "," );
+    Serial.print( robot.surface.timestamp_us );
+    Serial.print( "," );
+    Serial.print( sensor );
+    Serial.print( "," );
+    Serial.print( robot.surface.reading[sensor] );
+    Serial.print( "\n" );
+  }
+  // Ensure the robot is stopped
+  robot.setMotorPWM(0,0);
+}
+
+void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
+  // check if last reading timestamp has advanced
+  if (robot.surface.timestamp_us <= last_surface_us){
+    return;
+  }
+  last_surface_us = robot.surface.timestamp_us;
+
+  if (sample_num == 0) {
+    // Header
+    Serial.print( "test_name" );
+    Serial.print( "," );
+    Serial.print( "surface_value" );
+    Serial.print( "," );
+    Serial.print( "trial_num" );
+    Serial.print( "," );
+    Serial.print( "sample_num" );
+    Serial.print( "," );
+    Serial.print( "sample_time" );
+    Serial.print( "," );
+    Serial.print( "sensor_num" );
+    Serial.print( "," );
+    Serial.print( "sensor_reading" );
+    Serial.print( "," );
+    Serial.print( "rectangle_width_mm" );
+    Serial.print( "," );
+    Serial.print( "direction" );
+    Serial.print( "," );
+    Serial.print( "position_mm" );
+    Serial.print( "\n" );
+  }
+
+  // Report readings for all 5 surface sensors (DN1 to DN5) 
+  for (uint8\_t sensor = 0; sensor &lt; 5; sensor++) {
+    Serial.print(test_name_str);
+    Serial.print(",");
+    Serial.print(0); 
+    Serial.print(","); // surface\_value 
+    Serial.print(trial_num);
+    Serial.print(",");
+    Serial.print(sample_num);
+    Serial.print(",");
+    Serial.print(robot.surface.timestamp_us);
+    Serial.print(",");
+    Serial.print(sensor);
+    Serial.print(",");
+    Serial.print(robot.surface.reading[sensor]);
+    Serial.print(",");
+    Serial.print(rectangle\_width\_mm);
+    Serial.print(",");
+    Serial.print("increasing");
+    Serial.print(",");
+    Serial.println(position\_mm);
+  }
+
   robot.setMotorPWM(0,0);
 }
 
