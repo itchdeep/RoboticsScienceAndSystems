@@ -1,4 +1,5 @@
 #include "Controller.h"
+#include <math.h>
 
 const unsigned long Controller_c::UPDATE_INTERVAL_MS;
 const unsigned long Controller_c::TELEMETRY_INTERVAL_MS;
@@ -8,6 +9,15 @@ constexpr float Controller_c::BASE_PWM;
 constexpr float Controller_c::LINE_FOLLOW_GAIN;
 constexpr float Controller_c::RECOVERY_LEFT_PWM;
 constexpr float Controller_c::RECOVERY_RIGHT_PWM;
+const uint16_t Controller_c::BLACK_THRESHOLD;
+const uint8_t Controller_c::CONFIRM_COUNT;
+const unsigned long Controller_c::APPROACH_TIMEOUT_MS;
+constexpr float Controller_c::APPROACH_PWM;
+constexpr float Controller_c::PARK_PWM;
+constexpr float Controller_c::HEADING_GAIN;
+constexpr float Controller_c::SENSOR_OFFSET_MM;
+constexpr float Controller_c::SQUARE_SIDE_MM;
+constexpr float Controller_c::PARK_DEPTH_MM;
 
 Controller_c::Controller_c()
   : update_timer(UPDATE_INTERVAL_MS),
@@ -21,6 +31,13 @@ void Controller_c::reset() {
   recovery_start_ms = 0;
   last_surface_us = 0;
   sample_num = 0;
+
+  approach_start_ms = 0;
+  black_count = 0;
+  white_count = 0;
+  edge_x = 0;
+  edge_y = 0;
+  heading_ref = 0;
 }
 
 uint8_t Controller_c::getSignal() const {
@@ -35,8 +52,21 @@ void Controller_c::setSignal(uint8_t requested_signal) {
 
   if (signal == 0) {
     signal = 1;
-    mode = FOLLOWING_LINE;
     recovery_start_ms = 0;
+
+    // Each run starts a fresh odometry trial: origin (0,0), facing +x.
+    // The robot is stationary when the button is pressed.
+    odometry.reset(0.0f, 0.0f, 0.0f);
+    heading_ref = 0.0f;
+
+    if (ACTIVE_ROUTINE == ROUTINE_PARK) {
+      mode = APPROACHING;
+      approach_start_ms = 0;   // set on the first control cycle
+      black_count = 0;
+      white_count = 0;
+    } else {
+      mode = FOLLOWING_LINE;
+    }
   }
 }
 
@@ -45,27 +75,16 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   // Get the current count of milliseconds since the StampC3 was powered on.
   unsigned long now = robot.getMillis();
 
-  // Check if our TaskTimer_c for the general controller update indicates
-  // that it is the correct time to operate.  Note, we give the TaskTimer_c
-  // the current count in milliseconds.
-  // We do this because we don't want to query the robot faster than at 10ms
-  // intervals.
+  // Don't query the robot faster than every UPDATE_INTERVAL_MS.
   if (!update_timer.isReady(now)) {
-
-    // TaskTimer_c says it is not ready, so we simply end this call to
-    // the controller here by calling return.
     return;
   }
-
-  // The TaskTimer_c was ready, so we now reset the TaskTimer_c so it
-  // begins counting again.  We now run the remaining controller code.
   update_timer.resetTimer(now);
 
   // Ask the robot for latest information on surface reflectance sensors.
   bool surface_ok = robot.getSurfaceSensors();
 
-  // Ask the robot for the latest encoder information, and then use this
-  // to update the odometry on board the StampC3 (see OdometryModel.h).
+  // Latest encoders -> on-board odometry (see OdometryModel.h).
   if (robot.getEncoders()) {
     odometry.update(robot.getLeftEncoderCount(), robot.getRightEncoderCount());
   }
@@ -73,37 +92,61 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   // Pose estimation from the Pololu 3Pi robot itself.
   robot.getPose();
 
-  
-
-  // While waiting, a button press sets signal to 1 and starts the physical
-  // robot's line follower, even without Processing connected. The transmitted
-  // signal also starts an armed Digital Twin live comparison. This is a start
-  // control, not a start/stop toggle; further presses are ignored while signal is 1.
+  // While waiting, a button press starts the selected routine. This is a start
+  // control; the same button stops a running routine (handled below).
   if (signal == 0) {
     if (robot.isButtonPressed()) {
       setSignal(1);
     }
   }
 
-  // The user has started the demonstration, so we run the line following
-  // controller code.
   if (signal == 1) {
-    //runLineFollower(robot, now);
-    if (surface_ok == true){
-      testOffset(robot, now);
-      sample_num++;
+
+    switch (ACTIVE_ROUTINE) {
+
+      case ROUTINE_PARK:
+        runParking(robot, now);
+        break;
+
+      case ROUTINE_LINE_FOLLOW:
+        runLineFollower(robot, now);
+        break;
+
+      case ROUTINE_SENSOR_TEST:
+        sensorTest(robot, now);
+        break;
+
+      case ROUTINE_OFFSET_TEST:
+        if (surface_ok == true) {
+          testOffset(robot, now);
+          sample_num++;
+        }
+        break;
+
+      case ROUTINE_FOOTPRINT_TEST:
+        if (surface_ok == true) {
+          testFootprint(robot, now);
+          sample_num++;
+        }
+        break;
     }
+
+    // Button press while running: stop, return to waiting, count a new trial.
+    // For parking this is also how you re-arm after the robot has parked.
     if (robot.isButtonPressed()) {
+      stopMotors(robot);
       setSignal(0);
       trial_num++;
     }
   }
 
-  // Use another TaskTimer_c to limit how often we transmit telemetry data
-  // on WiFi and Serial.
+  // Telemetry is only sent for parking/line following, so it does not mix
+  // with the CSV output of the data-collection routines.
   if (telemetry_timer.isReady(now)) {
     telemetry_timer.resetTimer(now);
-    //publishTelemetry(robot, server, now);
+    if (ACTIVE_ROUTINE == ROUTINE_PARK || ACTIVE_ROUTINE == ROUTINE_LINE_FOLLOW) {
+      publishTelemetry(robot, server, now);
+    }
   }
 }
 
@@ -115,6 +158,16 @@ bool Controller_c::lineDetected(const Robot_c &robot) const {
 
   return false;
 }
+
+bool Controller_c::isBlack(uint16_t reading) const {
+  return reading >= BLACK_THRESHOLD;
+}
+
+void Controller_c::stopMotors(Robot_c &robot) {
+  robot.setMotorPWM(0, 0);
+}
+
+// ======================= Data collection (unchanged) =======================
 
 void Controller_c::sensorTest(Robot_c &robot, unsigned long now) {
   // Report sensor readings to view on Serial Plotter
@@ -155,7 +208,7 @@ void Controller_c::testOffset(Robot_c &robot, unsigned long now) {
     Serial.print( "sensor_reading" );
     Serial.print( "\n" );
   }
-  
+
   // Report sensor readings to view on Serial Plotter
   for (unsigned long sensor = 0; sensor <= 4; sensor++) {
     Serial.print( "offsetTest_white");
@@ -206,12 +259,12 @@ void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
     Serial.print( "\n" );
   }
 
-  // Report readings for all 5 surface sensors (DN1 to DN5) 
-  for (uint8\_t sensor = 0; sensor &lt; 5; sensor++) {
+  // Report readings for all 5 surface sensors (DN1 to DN5)
+  for (uint8_t sensor = 0; sensor < 5; sensor++) {
     Serial.print(test_name_str);
     Serial.print(",");
-    Serial.print(0); 
-    Serial.print(","); // surface\_value 
+    Serial.print(0);            // surface_value
+    Serial.print(",");
     Serial.print(trial_num);
     Serial.print(",");
     Serial.print(sample_num);
@@ -222,15 +275,104 @@ void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
     Serial.print(",");
     Serial.print(robot.surface.reading[sensor]);
     Serial.print(",");
-    Serial.print(rectangle\_width\_mm);
+    Serial.print(rectangle_width_mm);
     Serial.print(",");
     Serial.print("increasing");
     Serial.print(",");
-    Serial.println(position\_mm);
+    Serial.println(position_mm);
   }
 
   robot.setMotorPWM(0,0);
 }
+
+// ============================ Parking routine ============================
+
+// Drive forward while holding the starting heading. Odometry theta is positive
+// anticlockwise (left). If the robot has drifted left (theta > ref) we steer
+// right: speed up the left wheel, slow the right.
+void Controller_c::driveStraight(Robot_c &robot, float pwm) {
+  float error = odometry.pose.theta - heading_ref;
+  float correction = HEADING_GAIN * error;
+  robot.setMotorPWM(pwm + correction, pwm - correction);
+}
+
+void Controller_c::runParking(Robot_c &robot, unsigned long now) {
+
+  // DN3 (index 2) is the centre-front sensor, the first to reach the edge.
+  bool dn3_black = isBlack(robot.surface.reading[2]);
+
+  switch (mode) {
+
+    case APPROACHING: {
+      if (approach_start_ms == 0) {
+        approach_start_ms = now;
+      }
+
+      if (now - approach_start_ms >= APPROACH_TIMEOUT_MS) {
+        stopMotors(robot);
+        mode = FAILED_TIMEOUT;
+        robot.setLED(255, 0, 0, 60);   // red: failed
+        return;
+      }
+
+      black_count = dn3_black ? (black_count < 255 ? black_count + 1 : 255) : 0;
+
+      if (black_count >= CONFIRM_COUNT) {
+        // Edge found. Remember where, then switch to the slower parking drive.
+        edge_x = odometry.pose.x;
+        edge_y = odometry.pose.y;
+        white_count = 0;
+        mode = PARKING;
+        robot.setLED(0, 0, 255, 60);   // blue: inside the edge
+        driveStraight(robot, PARK_PWM);
+        return;
+      }
+
+      driveStraight(robot, APPROACH_PWM);
+      break;
+    }
+
+    case PARKING: {
+      // Distance travelled since DN3 crossed the edge.
+      float dx = odometry.pose.x - edge_x;
+      float dy = odometry.pose.y - edge_y;
+      float travelled = sqrtf(dx * dx + dy * dy);
+
+      // Robot centre is (travelled - SENSOR_OFFSET_MM) past the edge.
+      float target = SENSOR_OFFSET_MM + PARK_DEPTH_MM;
+
+      // Safety: DN3 back on white means the far edge has been reached.
+      white_count = !dn3_black ? (white_count < 255 ? white_count + 1 : 255) : 0;
+      if (white_count >= CONFIRM_COUNT) {
+        stopMotors(robot);
+        mode = FAILED_OVERRUN;
+        robot.setLED(255, 0, 0, 60);
+        return;
+      }
+
+      if (travelled >= target) {
+        stopMotors(robot);
+        mode = PARKED;
+        robot.setLED(0, 255, 0, 60);   // green: parked
+        return;
+      }
+
+      driveStraight(robot, PARK_PWM);
+      break;
+    }
+
+    case PARKED:
+    case FAILED_TIMEOUT:
+    case FAILED_OVERRUN:
+      stopMotors(robot);
+      break;
+
+    default:
+      break;
+  }
+}
+
+// ========================= Line follower (original) =========================
 
 void Controller_c::runLineFollower(Robot_c &robot, unsigned long now) {
   bool line_detected = lineDetected(robot);

@@ -7,19 +7,35 @@
 #include "OdometryModel.h"
 
 /**
- * @brief Supplies the nominal line-following controller for the StampC3 example.
+ * @brief Controller with a selectable routine: parking, sensor data collection,
+ * or the supplied line follower.
  *
  * Controller_c owns the controller state, while Robot_c owns the latest hardware
  * snapshot and RobotWifiAP_c owns optional telemetry transport. Students may read
  * or replace this controller, but should treat its constants as a demonstrator
  * baseline rather than a calibration of every physical robot.
+ *
+ * Choose what runs when the button is pressed by editing ACTIVE_ROUTINE below.
+ * Pressing the button again while a routine is running stops the motors,
+ * returns to waiting and increments trial_num, so you can run repeated trials.
  */
 class Controller_c {
   
   public:
+    /** @brief Routines that can be run after the button is pressed. */
+    enum Routine {
+      ROUTINE_PARK,            // drive forward and park in a black square
+      ROUTINE_SENSOR_TEST,     // stream 5 sensor values (Serial Plotter), motors off
+      ROUTINE_OFFSET_TEST,     // CSV sensor logging for the offset test, motors off
+      ROUTINE_FOOTPRINT_TEST,  // CSV sensor logging for the footprint test, motors off
+      ROUTINE_LINE_FOLLOW      // original supplied line follower
+    };
+
+    /** @brief >>> CHANGE THIS to select which routine runs. <<< */
+    static const Routine ACTIVE_ROUTINE = ROUTINE_PARK;
+
     /** @brief Editable local encoder-to-pose model; inspect odometry.pose.
-     * @note Controller mode resets do not reset this estimate. Use
-     * odometry.reset(...) explicitly to start a new physical trial.
+     * @note Reset automatically at the start of each run (see setSignal).
      */
     OdometryModel_c odometry;
 
@@ -27,6 +43,8 @@ class Controller_c {
     static const unsigned long UPDATE_INTERVAL_MS = 10;
     /** @brief Interval between telemetry records in milliseconds. */
     static const unsigned long TELEMETRY_INTERVAL_MS = 50;
+
+    // ---------------- Line follower parameters (original) ----------------
     /** @brief Maximum line-search duration before the controller stops. */
     static const unsigned long RECOVERY_TIMEOUT_MS = 5000;
     /** @brief Surface-reading threshold used to decide whether a line is present. */
@@ -40,13 +58,33 @@ class Controller_c {
     /** @brief Right PWM used during the one-direction line-search rotation. */
     static constexpr float RECOVERY_RIGHT_PWM = 35.0f;
 
+    // ---------------- Parking parameters ----------------
+    /** @brief Surface reading at or above this counts as black (black~2000, white~400). */
+    static const uint16_t BLACK_THRESHOLD = 1400;
+    /** @brief Consecutive 10 ms cycles a reading must persist to be believed. */
+    static const uint8_t CONFIRM_COUNT = 3;
+    /** @brief Give up if black has not been found after this long. */
+    static const unsigned long APPROACH_TIMEOUT_MS = 15000;
+    /** @brief PWM while searching for the square. */
+    static constexpr float APPROACH_PWM = 40.0f;
+    /** @brief Slower PWM once inside, so the robot stops accurately. */
+    static constexpr float PARK_PWM = 30.0f;
+    /** @brief PWM correction per radian of heading error (keeps the path straight). */
+    static constexpr float HEADING_GAIN = 40.0f;
+    /** @brief Distance in mm from the wheel axle to DN3. */
+    static constexpr float SENSOR_OFFSET_MM = 45.0f;
+    /** @brief Side length of the black square in mm. MEASURE YOURS and change this. */
+    static constexpr float SQUARE_SIDE_MM = 100.0f;
+    /** @brief How far past the edge the robot centre should finish (default: centred). */
+    static constexpr float PARK_DEPTH_MM = SQUARE_SIDE_MM / 2.0f;
+
     /** @brief Creates a controller in its waiting state. */
     Controller_c();
 
     /** @brief Clears signal and mode state, returning the controller to waiting.
-     * @note This does not reset the task timers or the local odometry estimate.
-     * It sends no motor command: returning to waiting does not stop the motors.
-     * Send robot.setMotorPWM(0, 0) separately and check the command result.
+     * @note This does not reset the task timers. It sends no motor command:
+     * returning to waiting does not stop the motors. Send
+     * robot.setMotorPWM(0, 0) separately and check the command result.
      */
     void reset();
 
@@ -59,9 +97,7 @@ class Controller_c {
     /**
      * @brief Starts the controller or resets it to waiting.
      * @param requested_signal Zero resets to waiting without sending a motor stop;
-     * a non-zero value starts line following only if the current signal is zero.
-     * @note The signal remains one after a line-search timeout. Reset to zero
-     * before requesting another start; a repeated non-zero value has no effect.
+     * a non-zero value starts the active routine only if the current signal is zero.
      */
     void setSignal(uint8_t requested_signal);
 
@@ -92,12 +128,17 @@ class Controller_c {
     
 
   private:
-    /** @brief Internal modes used by the nominal line-following demonstration. */
+    /** @brief Internal modes. The first four are used by the line follower. */
     enum Mode {
       WAITING,
       FOLLOWING_LINE,
       SEARCHING_FOR_LINE,
-      STOPPED
+      STOPPED,
+      APPROACHING,      // parking: driving over white, looking for the black edge
+      PARKING,          // parking: inside the edge, driving the last distance
+      PARKED,           // parking: success
+      FAILED_TIMEOUT,   // parking: never found black
+      FAILED_OVERRUN    // parking: ran out of black before reaching the target depth
     };
 
     uint8_t signal;
@@ -107,8 +148,28 @@ class Controller_c {
     unsigned long recovery_start_ms;
     unsigned long trial_num = 0;
 
+    // Parking state
+    unsigned long approach_start_ms = 0;
+    uint8_t black_count = 0;
+    uint8_t white_count = 0;
+    float edge_x = 0;
+    float edge_y = 0;
+    float heading_ref = 0;
+
     /** @brief Returns whether cached DN3 is at or above LINE_THRESHOLD. */
     bool lineDetected(const Robot_c &robot) const;
+
+    /** @brief Returns whether a reading is at or above BLACK_THRESHOLD. */
+    bool isBlack(uint16_t reading) const;
+
+    /** @brief Drives forward at pwm while holding the starting heading. */
+    void driveStraight(Robot_c &robot, float pwm);
+
+    /** @brief Sends zero PWM to both motors. */
+    void stopMotors(Robot_c &robot);
+
+    /** @brief Drive forward and park in the black square (state machine). */
+    void runParking(Robot_c &robot, unsigned long now);
 
     /** @brief sensor test function, prints IR readings to serial. */
     void sensorTest(Robot_c &robot, unsigned long now);
