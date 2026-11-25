@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" font-family="Helvetica, Arial, sans-serif">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<path d="M 6.50 10.50 L 6.50 14.50 L 2.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 10.50 L 104.50 14.50 L 108.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 6.50 76.50 L 6.50 72.50 L 2.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 76.50 L 104.50 72.50 L 108.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="55.50" y1="14.50" x2="55.50" y2="10.00" stroke="#000000" stroke-width="0.3"/>
+<text x="14.00" y="13.00" font-size="4" fill="#555555">surface_value 255  (100% white)</text>
+<rect x="111.00" y="16.00" width="95.0" height="55.0" fill="rgb(224,224,224)"/>
+<path d="M 109.50 10.50 L 109.50 14.50 L 105.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 10.50 L 207.50 14.50 L 211.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 109.50 76.50 L 109.50 72.50 L 105.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 76.50 L 207.50 72.50 L 211.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="158.50" y1="14.50" x2="158.50" y2="10.00" stroke="#000000" stroke-width="0.3"/>
+<text x="117.00" y="13.00" font-size="4" fill="#555555">surface_value 224  (88% white)</text>
+<rect x="214.00" y="16.00" width="95.0" height="55.0" fill="rgb(192,192,192)"/>
+<path d="M 212.50 10.50 L 212.50 14.50 L 208.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 10.50 L 310.50 14.50 L 314.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 212.50 76.50 L 212.50 72.50 L 208.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 76.50 L 310.50 72.50 L 314.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="261.50" y1="14.50" x2="261.50" y2="10.00" stroke="#000000" stroke-width="0.3"/>
+<text x="220.00" y="13.00" font-size="4" fill="#555555">surface_value 192  (75% white)</text>
+<rect x="317.00" y="16.00" width="95.0" height="55.0" fill="rgb(160,160,160)"/>
+<path d="M 315.50 10.50 L 315.50 14.50 L 311.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 10.50 L 413.50 14.50 L 417.50 14.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 315.50 76.50 L 315.50 72.50 L 311.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 76.50 L 413.50 72.50 L 417.50 72.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="364.50" y1="14.50" x2="364.50" y2="10.00" stroke="#000000" stroke-width="0.3"/>
+<text x="323.00" y="13.00" font-size="4" fill="#555555">surface_value 160  (63% white)</text>
+<rect x="8.00" y="82.00" width="95.0" height="55.0" fill="rgb(128,128,128)"/>
+<path d="M 6.50 76.50 L 6.50 80.50 L 2.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 76.50 L 104.50 80.50 L 108.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 6.50 142.50 L 6.50 138.50 L 2.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 142.50 L 104.50 138.50 L 108.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="55.50" y1="80.50" x2="55.50" y2="76.00" stroke="#000000" stroke-width="0.3"/>
+<text x="14.00" y="79.00" font-size="4" fill="#555555">surface_value 128  (50% white)</text>
+<rect x="111.00" y="82.00" width="95.0" height="55.0" fill="rgb(112,112,112)"/>
+<path d="M 109.50 76.50 L 109.50 80.50 L 105.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 76.50 L 207.50 80.50 L 211.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 109.50 142.50 L 109.50 138.50 L 105.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 142.50 L 207.50 138.50 L 211.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="158.50" y1="80.50" x2="158.50" y2="76.00" stroke="#000000" stroke-width="0.3"/>
+<text x="117.00" y="79.00" font-size="4" fill="#555555">surface_value 112  (44% white)</text>
+<rect x="214.00" y="82.00" width="95.0" height="55.0" fill="rgb(96,96,96)"/>
+<path d="M 212.50 76.50 L 212.50 80.50 L 208.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 76.50 L 310.50 80.50 L 314.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 212.50 142.50 L 212.50 138.50 L 208.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 142.50 L 310.50 138.50 L 314.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="261.50" y1="80.50" x2="261.50" y2="76.00" stroke="#000000" stroke-width="0.3"/>
+<text x="220.00" y="79.00" font-size="4" fill="#555555">surface_value 96  (38% white)</text>
+<rect x="317.00" y="82.00" width="95.0" height="55.0" fill="rgb(80,80,80)"/>
+<path d="M 315.50 76.50 L 315.50 80.50 L 311.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 76.50 L 413.50 80.50 L 417.50 80.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 315.50 142.50 L 315.50 138.50 L 311.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 142.50 L 413.50 138.50 L 417.50 138.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="364.50" y1="80.50" x2="364.50" y2="76.00" stroke="#000000" stroke-width="0.3"/>
+<text x="323.00" y="79.00" font-size="4" fill="#555555">surface_value 80  (31% white)</text>
+<rect x="8.00" y="148.00" width="95.0" height="55.0" fill="rgb(64,64,64)"/>
+<path d="M 6.50 142.50 L 6.50 146.50 L 2.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 142.50 L 104.50 146.50 L 108.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 6.50 208.50 L 6.50 204.50 L 2.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 208.50 L 104.50 204.50 L 108.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="55.50" y1="146.50" x2="55.50" y2="142.00" stroke="#000000" stroke-width="0.3"/>
+<text x="14.00" y="145.00" font-size="4" fill="#555555">surface_value 64  (25% white)</text>
+<rect x="111.00" y="148.00" width="95.0" height="55.0" fill="rgb(48,48,48)"/>
+<path d="M 109.50 142.50 L 109.50 146.50 L 105.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 142.50 L 207.50 146.50 L 211.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 109.50 208.50 L 109.50 204.50 L 105.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 208.50 L 207.50 204.50 L 211.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="158.50" y1="146.50" x2="158.50" y2="142.00" stroke="#000000" stroke-width="0.3"/>
+<text x="117.00" y="145.00" font-size="4" fill="#555555">surface_value 48  (19% white)</text>
+<rect x="214.00" y="148.00" width="95.0" height="55.0" fill="rgb(40,40,40)"/>
+<path d="M 212.50 142.50 L 212.50 146.50 L 208.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 142.50 L 310.50 146.50 L 314.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 212.50 208.50 L 212.50 204.50 L 208.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 208.50 L 310.50 204.50 L 314.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="261.50" y1="146.50" x2="261.50" y2="142.00" stroke="#000000" stroke-width="0.3"/>
+<text x="220.00" y="145.00" font-size="4" fill="#555555">surface_value 40  (16% white)</text>
+<rect x="317.00" y="148.00" width="95.0" height="55.0" fill="rgb(32,32,32)"/>
+<path d="M 315.50 142.50 L 315.50 146.50 L 311.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 142.50 L 413.50 146.50 L 417.50 146.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 315.50 208.50 L 315.50 204.50 L 311.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 208.50 L 413.50 204.50 L 417.50 204.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="364.50" y1="146.50" x2="364.50" y2="142.00" stroke="#000000" stroke-width="0.3"/>
+<text x="323.00" y="145.00" font-size="4" fill="#555555">surface_value 32  (13% white)</text>
+<rect x="8.00" y="214.00" width="95.0" height="55.0" fill="rgb(24,24,24)"/>
+<path d="M 6.50 208.50 L 6.50 212.50 L 2.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 208.50 L 104.50 212.50 L 108.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 6.50 274.50 L 6.50 270.50 L 2.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 104.50 274.50 L 104.50 270.50 L 108.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="55.50" y1="212.50" x2="55.50" y2="208.00" stroke="#000000" stroke-width="0.3"/>
+<text x="14.00" y="211.00" font-size="4" fill="#555555">surface_value 24  (9% white)</text>
+<rect x="111.00" y="214.00" width="95.0" height="55.0" fill="rgb(16,16,16)"/>
+<path d="M 109.50 208.50 L 109.50 212.50 L 105.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 208.50 L 207.50 212.50 L 211.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 109.50 274.50 L 109.50 270.50 L 105.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 207.50 274.50 L 207.50 270.50 L 211.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="158.50" y1="212.50" x2="158.50" y2="208.00" stroke="#000000" stroke-width="0.3"/>
+<text x="117.00" y="211.00" font-size="4" fill="#555555">surface_value 16  (6% white)</text>
+<rect x="214.00" y="214.00" width="95.0" height="55.0" fill="rgb(8,8,8)"/>
+<path d="M 212.50 208.50 L 212.50 212.50 L 208.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 208.50 L 310.50 212.50 L 314.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 212.50 274.50 L 212.50 270.50 L 208.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 310.50 274.50 L 310.50 270.50 L 314.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="261.50" y1="212.50" x2="261.50" y2="208.00" stroke="#000000" stroke-width="0.3"/>
+<text x="220.00" y="211.00" font-size="4" fill="#555555">surface_value 8  (3% white)</text>
+<rect x="317.00" y="214.00" width="95.0" height="55.0" fill="rgb(0,0,0)"/>
+<path d="M 315.50 208.50 L 315.50 212.50 L 311.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 208.50 L 413.50 212.50 L 417.50 212.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 315.50 274.50 L 315.50 270.50 L 311.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<path d="M 413.50 274.50 L 413.50 270.50 L 417.50 270.50" fill="none" stroke="#000000" stroke-width="0.25"/>
+<line x1="364.50" y1="212.50" x2="364.50" y2="208.00" stroke="#000000" stroke-width="0.3"/>
+<text x="323.00" y="211.00" font-size="4" fill="#555555">surface_value 0  (0% white)</text>
+<line x1="8.0" y1="288.0" x2="108.0" y2="288.0" stroke="#000000" stroke-width="0.4"/>
+<line x1="8.0" y1="286.0" x2="8.0" y2="290.0" stroke="#000000" stroke-width="0.4"/>
+<line x1="108.0" y1="286.0" x2="108.0" y2="290.0" stroke="#000000" stroke-width="0.4"/>
+<text x="113.0" y="289.2" font-size="3" fill="#555555">100 mm check bar — print A3 at 100 % (actual size), GREYSCALE / BLACK INK ONLY, same printer and paper as the course. Robot faces up the page.</text>
+</svg>

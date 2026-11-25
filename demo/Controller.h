@@ -76,6 +76,17 @@ class Controller_c {
      */
     void update(Robot_c &robot, RobotWifiAP_c &server);
 
+    /**
+     * @brief Spatial-footprint logger (exercise 7). Call every update cycle.
+     *
+     * Each trigger (StampC3 button, or any character sent over Serial) runs one
+     * stationary batch: wait footprint_settle_ms for hands to leave the robot,
+     * then log footprint_samples_per_batch fresh snapshots (5 CSV rows each),
+     * then beep. In FOOTPRINT_STRIP mode the position label then advances by
+     * footprint_step_mm; after the batch at footprint_end_mm a long low beep
+     * marks the end of the traverse and the next trigger starts a new trial.
+     * In the reference modes every trigger is one new placement (new trial).
+     */
     void testFootprint(Robot_c &robot, unsigned long now);
 
     // To track when the last sensor readings were retrieved in microseconds
@@ -83,13 +94,38 @@ class Controller_c {
     // Tracks how many sensor sample screenshots were recorded
     unsigned long sample_num;
 
-    // csv test_name field
-    const char* test_name_str = "footprintWhiteReference";
-    // width of black test strip
-    uint8_t rectangle_width_mm = 0;
-    // signed position across strip in mm
-    int16_t position_mm = 0;
-    
+    uint8_t surface_value = 0; // used by testSaturation: 0 = solid black, 255 = solid white
+
+    // ---------------- Footprint test configuration (edit, then flash) ----------------
+    enum FootprintTest_t {
+      FOOTPRINT_STRIP,      // test_name footprintTest, 10 columns
+      FOOTPRINT_WHITE_REF,  // test_name footprintWhiteReference, 7 columns
+      FOOTPRINT_BLACK_REF   // test_name footprintBlackReference, 7 columns
+    };
+    FootprintTest_t footprint_test = FOOTPRINT_STRIP;
+
+    // surface_value labels, following the Colab example (white = 100, black = 0)
+    uint8_t footprint_white_surface_value = 100;
+    uint8_t footprint_black_surface_value = 0;
+
+    // Measured width of the strip on the actual print (mm)
+    float rectangle_width_mm = 10.0f;
+    // Scan positions of the sensor relative to the strip centre (mm).
+    // start < end -> "increasing"; start > end -> "decreasing". Step is a positive size.
+    float footprint_start_mm = -12.0f;
+    float footprint_end_mm = 12.0f;
+    float footprint_step_mm = 1.0f;
+
+    // trial_num restarts after every flash/reset; raise this so a new session
+    // doesn't reuse a trial number already in your CSV for the same width/direction.
+    unsigned long footprint_first_trial = 1;
+
+    unsigned int footprint_samples_per_batch = 50;
+    unsigned long footprint_settle_ms = 2000;
+
+    // Current position label (set automatically during a traverse)
+    float position_mm = 0.0f;
+
 
   private:
     /** @brief Internal modes used by the nominal line-following demonstration. */
@@ -107,6 +143,21 @@ class Controller_c {
     unsigned long recovery_start_ms;
     unsigned long trial_num = 0;
 
+    /** @brief Footprint logger states. */
+    enum FootprintState_t {
+      FP_IDLE,       // waiting for a trigger; safe to move the robot
+      FP_SETTLING,   // triggered; hands off, waiting footprint_settle_ms
+      FP_RECORDING   // logging fresh snapshots
+    };
+    FootprintState_t fp_state = FP_IDLE;
+    unsigned long fp_settle_start_ms = 0;
+    bool fp_traverse_active = false;  // a strip traverse is in progress
+    int fp_position_index = 0;        // index of the current stop in the traverse
+    int fp_last_position_index = 0;   // index of the final stop
+
+    /** @brief Prints one five-row snapshot for the footprint test. */
+    void printFootprintSnapshot(Robot_c &robot);
+
     /** @brief Returns whether cached DN3 is at or above LINE_THRESHOLD. */
     bool lineDetected(const Robot_c &robot) const;
 
@@ -115,6 +166,9 @@ class Controller_c {
 
     /** @brief tests sensor offsets */
     void testOffset(Robot_c &robot, unsigned long now);
+
+    /** @brief tests black reference */
+    void testSaturation(Robot_c &robot, unsigned long now);
 
     /** @brief Applies the nominal controller behaviour for the current mode. */
     void runLineFollower(Robot_c &robot, unsigned long now);

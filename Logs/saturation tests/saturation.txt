@@ -1,0 +1,6 @@
+Using sensorTest to guess at maximum reading for black regions, give or take 10:
+DN1: 2100
+DN2: 2680
+DN3: 2200
+DN4: 2660
+DN5: 2290

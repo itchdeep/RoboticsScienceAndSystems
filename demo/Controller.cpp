@@ -73,24 +73,22 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   // Pose estimation from the Pololu 3Pi robot itself.
   robot.getPose();
 
-  
+  // Exercise 7: spatial footprint. testFootprint handles its own button /
+  // Serial trigger, settling delay, batch capture, beeps and zero motors.
+  //(void)surface_ok;  // freshness is checked via the sensor timestamp instead
+  //testFootprint(robot, now);
 
-  // While waiting, a button press sets signal to 1 and starts the physical
-  // robot's line follower, even without Processing connected. The transmitted
-  // signal also starts an armed Digital Twin live comparison. This is a start
-  // control, not a start/stop toggle; further presses are ignored while signal is 1.
+  //Previous button-toggled tests (offset / saturation):
   if (signal == 0) {
     if (robot.isButtonPressed()) {
       setSignal(1);
     }
   }
 
-  // The user has started the demonstration, so we run the line following
-  // controller code.
   if (signal == 1) {
     //runLineFollower(robot, now);
     if (surface_ok == true){
-      testOffset(robot, now);
+      testSaturation(robot, now);
       sample_num++;
     }
     if (robot.isButtonPressed()) {
@@ -98,6 +96,7 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
       trial_num++;
     }
   }
+  
 
   // Use another TaskTimer_c to limit how often we transmit telemetry data
   // on WiFi and Serial.
@@ -175,7 +174,7 @@ void Controller_c::testOffset(Robot_c &robot, unsigned long now) {
   robot.setMotorPWM(0,0);
 }
 
-void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
+void Controller_c::testSaturation(Robot_c &robot, unsigned long now) {
   // check if last reading timestamp has advanced
   if (robot.surface.timestamp_us <= last_surface_us){
     return;
@@ -197,21 +196,145 @@ void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
     Serial.print( "sensor_num" );
     Serial.print( "," );
     Serial.print( "sensor_reading" );
-    Serial.print( "," );
-    Serial.print( "rectangle_width_mm" );
-    Serial.print( "," );
-    Serial.print( "direction" );
-    Serial.print( "," );
-    Serial.print( "position_mm" );
     Serial.print( "\n" );
   }
+  
+  // Report sensor readings to view on Serial Plotter
+  for (unsigned long sensor = 0; sensor <= 4; sensor++) {
+    Serial.print( "saturationTest");
+    Serial.print( "," );
+    Serial.print( 255 ); // surface_value
+    Serial.print( "," );
+    Serial.print( 1 );
+    Serial.print( "," );
+    Serial.print( sample_num );
+    Serial.print( "," );
+    Serial.print( robot.surface.timestamp_us );
+    Serial.print( "," );
+    Serial.print( sensor );
+    Serial.print( "," );
+    Serial.print( robot.surface.reading[sensor] );
+    Serial.print( "\n" );
+  }
+  // Ensure the robot is stopped
+  robot.setMotorPWM(0,0);
+}
 
-  // Report readings for all 5 surface sensors (DN1 to DN5) 
-  for (uint8\_t sensor = 0; sensor &lt; 5; sensor++) {
-    Serial.print(test_name_str);
+void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
+  // Keep the motors commanded to zero on every cycle.
+  robot.setMotorPWM(0, 0);
+
+  // Trigger: the StampC3 button, or any character sent from the Serial Monitor
+  // (lets you start a batch without touching the robot). Always drain Serial
+  // so characters sent while busy don't queue up as extra triggers.
+  bool trigger = robot.isButtonPressed();
+  while (Serial.available() > 0) {
+    Serial.read();
+    trigger = true;
+  }
+
+  const bool strip_mode = (footprint_test == FOOTPRINT_STRIP);
+
+  switch (fp_state) {
+
+    case FP_IDLE: {
+      if (!trigger) return;
+
+      if (!fp_traverse_active) {
+        // Start of a new independently registered traverse (strip mode), or a
+        // new placement on a reference patch (reference modes).
+        trial_num++;
+        if (trial_num < footprint_first_trial) trial_num = footprint_first_trial;
+
+        if (strip_mode) {
+          float span = fabsf(footprint_end_mm - footprint_start_mm);
+          fp_last_position_index = (int)lroundf(span / footprint_step_mm);
+          fp_position_index = 0;
+          position_mm = footprint_start_mm;
+          fp_traverse_active = true;
+        }
+
+        // Header
+        Serial.print("test_name,surface_value,trial_num,sample_num,sample_time,sensor_num,sensor_reading");
+        if (strip_mode) {
+          Serial.print(",rectangle_width_mm,direction,position_mm");
+        }
+        Serial.print("\n");
+      }
+
+      // New stop: sample_num counts fresh snapshots at this position, from 1.
+      sample_num = 0;
+      fp_settle_start_ms = now;
+      fp_state = FP_SETTLING;
+      robot.setLED(255, 120, 0, 60);   // orange: hands off, settling
+      return;
+    }
+
+    case FP_SETTLING: {
+      if (now - fp_settle_start_ms < footprint_settle_ms) return;
+
+      // Ignore whatever snapshot was cached before settling finished.
+      last_surface_us = robot.surface.timestamp_us;
+      fp_state = FP_RECORDING;
+      robot.setLED(255, 0, 0, 60);     // red: recording
+      return;
+    }
+
+    case FP_RECORDING: {
+      // Only log fresh snapshots. Use != rather than <= so the 32-bit
+      // microsecond timestamp wrapping (~71 min) can't stall the logger.
+      if (robot.surface.timestamp_us == last_surface_us) return;
+      last_surface_us = robot.surface.timestamp_us;
+
+      sample_num++;
+      printFootprintSnapshot(robot);
+
+      if (sample_num < footprint_samples_per_batch) return;
+
+      // Batch complete.
+      fp_state = FP_IDLE;
+
+      if (strip_mode && fp_position_index < fp_last_position_index) {
+        // Advance the label to the next stop; move the robot there next.
+        fp_position_index++;
+        float dir = (footprint_end_mm >= footprint_start_mm) ? 1.0f : -1.0f;
+        position_mm = footprint_start_mm + dir * footprint_step_mm * fp_position_index;
+        robot.playTone(1500, 100);     // short high beep: move to next position
+        robot.setLED(0, 255, 0, 60);   // green: safe to move
+      } else {
+        // End of traverse (strip) or end of placement (reference).
+        fp_traverse_active = false;
+        robot.playTone(500, 600);      // long low beep: finished
+        robot.setLED(0, 0, 255, 60);   // blue: done, next trigger = new trial
+      }
+      return;
+    }
+  }
+}
+
+void Controller_c::printFootprintSnapshot(Robot_c &robot) {
+  const char* test_name;
+  uint8_t surface_val;
+  if (footprint_test == FOOTPRINT_WHITE_REF) {
+    test_name = "footprintWhiteReference";
+    surface_val = footprint_white_surface_value;
+  } else if (footprint_test == FOOTPRINT_BLACK_REF) {
+    test_name = "footprintBlackReference";
+    surface_val = footprint_black_surface_value;
+  } else {
+    test_name = "footprintTest";
+    surface_val = footprint_black_surface_value;  // nominal black target
+  }
+
+  const char* direction =
+    (footprint_end_mm >= footprint_start_mm) ? "increasing" : "decreasing";
+
+  // All five rows share trial, sample number, timestamp (and position).
+  for (uint8_t sensor = 0; sensor < 5; sensor++) {
+    Serial.print(test_name);
     Serial.print(",");
-    Serial.print(0); 
-    Serial.print(","); // surface\_value 
+    Serial.print(surface_val);
+    Serial.print(",");
     Serial.print(trial_num);
     Serial.print(",");
     Serial.print(sample_num);
@@ -221,15 +344,16 @@ void Controller_c::testFootprint(Robot_c &robot, unsigned long now) {
     Serial.print(sensor);
     Serial.print(",");
     Serial.print(robot.surface.reading[sensor]);
-    Serial.print(",");
-    Serial.print(rectangle\_width\_mm);
-    Serial.print(",");
-    Serial.print("increasing");
-    Serial.print(",");
-    Serial.println(position\_mm);
+    if (footprint_test == FOOTPRINT_STRIP) {
+      Serial.print(",");
+      Serial.print(rectangle_width_mm);
+      Serial.print(",");
+      Serial.print(direction);
+      Serial.print(",");
+      Serial.print(position_mm);
+    }
+    Serial.print("\n");
   }
-
-  robot.setMotorPWM(0,0);
 }
 
 void Controller_c::runLineFollower(Robot_c &robot, unsigned long now) {
