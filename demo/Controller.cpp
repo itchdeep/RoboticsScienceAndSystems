@@ -78,6 +78,7 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   //(void)surface_ok;  // freshness is checked via the sensor timestamp instead
   //testFootprint(robot, now);
 
+
   //Previous button-toggled tests (offset / saturation):
   if (signal == 0) {
     if (robot.isButtonPressed()) {
@@ -88,7 +89,7 @@ void Controller_c::update(Robot_c &robot, RobotWifiAP_c &server) {
   if (signal == 1) {
     //runLineFollower(robot, now);
     if (surface_ok == true){
-      testSaturation(robot, now);
+      sensorTest(robot, now);
       sample_num++;
     }
     if (robot.isButtonPressed()) {
@@ -203,9 +204,9 @@ void Controller_c::testSaturation(Robot_c &robot, unsigned long now) {
   for (unsigned long sensor = 0; sensor <= 4; sensor++) {
     Serial.print( "saturationTest");
     Serial.print( "," );
-    Serial.print( 255 ); // surface_value
+    Serial.print( 255 ); // surface_value, modify for each pass
     Serial.print( "," );
-    Serial.print( 1 );
+    Serial.print( 2 );
     Serial.print( "," );
     Serial.print( sample_num );
     Serial.print( "," );

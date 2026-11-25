@@ -102,19 +102,19 @@ class Controller_c {
       FOOTPRINT_WHITE_REF,  // test_name footprintWhiteReference, 7 columns
       FOOTPRINT_BLACK_REF   // test_name footprintBlackReference, 7 columns
     };
-    FootprintTest_t footprint_test = FOOTPRINT_STRIP;
+    FootprintTest_t footprint_test = FOOTPRINT_BLACK_REF;
 
-    // surface_value labels, following the Colab example (white = 100, black = 0)
-    uint8_t footprint_white_surface_value = 100;
+    // surface_value labels (white = 255, black = 0)
+    uint8_t footprint_white_surface_value = 255;
     uint8_t footprint_black_surface_value = 0;
 
     // Measured width of the strip on the actual print (mm)
-    float rectangle_width_mm = 10.0f;
+    float rectangle_width_mm = 20.0f;
     // Scan positions of the sensor relative to the strip centre (mm).
     // start < end -> "increasing"; start > end -> "decreasing". Step is a positive size.
-    float footprint_start_mm = -12.0f;
-    float footprint_end_mm = 12.0f;
-    float footprint_step_mm = 1.0f;
+    float footprint_start_mm = 22.0f;
+    float footprint_end_mm = -22.0f;
+    float footprint_step_mm = 4.0f;
 
     // trial_num restarts after every flash/reset; raise this so a new session
     // doesn't reuse a trial number already in your CSV for the same width/direction.
